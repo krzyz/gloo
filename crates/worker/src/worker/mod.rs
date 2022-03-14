@@ -98,17 +98,11 @@ fn worker_new(
         ""
     };
     let script_url = format!("{}{}/{}", origin, prefix, name_of_resource);
-    let wasm_url = format!(
-        "{}{}/{}",
-        origin,
-        prefix,
-        name_of_resource.replace(".js", "_bg.wasm")
-    );
     let array = Array::new();
     array.push(
         &format!(
-            r#"importScripts("{}");wasm_bindgen("{}");"#,
-            script_url, wasm_url
+            r#"import init, {{initThreadPool}} from '{}'; self.onmessage = async event => {{ await init(undefined, event.data); await initThreadPool(navigator.hardwareConcurrency); }}"#,
+            script_url,
         )
         .into(),
     );
@@ -127,7 +121,10 @@ fn worker_new(
             &JsValue::from_str("module"),
         )
         .unwrap();
-        web_sys::Worker::new_with_options(&url, &options).expect("failed to spawn worker")
+        let w = web_sys::Worker::new_with_options(&url, &options).expect("failed to spawn worker");
+        w.post_message(&wasm_bindgen::memory())
+            .expect("failed to send memory to worker");
+        w
     } else {
         web_sys::Worker::new(&url).expect("failed to spawn worker")
     }
