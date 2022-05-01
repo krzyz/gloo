@@ -101,7 +101,7 @@ fn worker_new(
     let array = Array::new();
     array.push(
         &format!(
-            r#"import init, {{initThreadPool}} from '{}'; self.onmessage = async event => {{ await init(undefined, event.data); await initThreadPool(navigator.hardwareConcurrency); }}"#,
+            r#"import init from '{}'; self.onmessage = async event => {{ await init(undefined, event.data); }}"#,
             script_url,
         )
         .into(),
